@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sipah</title>
+<meta name="description" content="Responda o quiz sarcástico, descubra que tipo de problema você é e corra contra o estande inteiro.">
+<meta name="theme-color" content="#0d0a1a">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sipah">
+<link rel="stylesheet" href="fonts/rubik/400.css">
+<link rel="stylesheet" href="fonts/rubik/600.css">
+<link rel="stylesheet" href="fonts/rubik/800.css">
+<link rel="stylesheet" href="fonts/rubik/900.css">
+<link rel="stylesheet" href="fonts/permanent-marker/400.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<!-- INTRO -->
+<section class="screen" id="s-intro" hidden>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 120 80" aria-hidden="true"><path d="M8 70 L14 18 L38 44 L60 6 L82 44 L106 18 L112 70 Z" fill="var(--lime)" stroke="var(--shadow)" stroke-width="7" stroke-linejoin="round"/></svg>
+      <div class="logo">Sipah</div>
+      <div class="tag">Corre que o algoritmo tá te julgando.</div>
+    </div>
+    <div class="stage short" data-stage="intro"></div>
+    <div class="panel">
+      <p class="lead">Antes de correr, precisamos descobrir que tipo de problema você é.</p>
+      <p class="muted">8 perguntas. Responda com sinceridade. Ou minta. O algoritmo vai te julgar de qualquer jeito.</p>
+      <div>
+        <label class="eyebrow" for="nick">Seu apelido</label>
+        <input type="text" id="nick" maxlength="14" autocomplete="off" placeholder="ex.: lucas_07">
+        <div class="err" id="nick-err"></div>
+      </div>
+      <button class="btn big" id="btn-start"><span>Começar o julgamento</span></button>
+      <p class="muted" style="text-align:center">Sem cadastro e sem e-mail. Só um apelido.</p>
+      <button class="btn ghost install" id="btn-install" hidden><span>Instalar o app</span></button>
+      <p class="muted ios-hint" id="ios-hint" hidden>No iPhone: toque em Compartilhar e depois em “Adicionar à Tela de Início”.</p>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="screen" id="s-quiz" hidden>
+  <div class="wrap">
+    <div class="qtop">
+      <button class="iconbtn" id="q-back" aria-label="Voltar">←</button>
+      <div class="prog">
+        <span class="eyebrow" id="q-count">Pergunta 1 de 8</span>
+        <div class="track"><div class="fill" id="q-fill"></div></div>
+      </div>
+    </div>
+    <div class="qcard" id="q-card">
+      <h2 class="qtext" id="q-text"></h2>
+      <div class="opts" id="q-opts"></div>
+      <div class="comment" id="q-comment" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CALCULANDO -->
+<section class="screen" id="s-calc" hidden>
+  <div class="wrap calc" id="calc-lines">
+    <p>Analisando suas escolhas questionáveis…</p>
+    <p>Consultando o algoritmo…</p>
+    <p>Comparando com 8 tipos de problema…</p>
+    <p>Montando seu avatar…</p>
+  </div>
+</section>
+
+<!-- RESULTADO -->
+<section class="screen" id="s-result" hidden>
+  <div class="wrap">
+    <div class="rhead">
+      <span class="eyebrow">Você é:</span>
+      <h1 class="rname" id="r-name"></h1>
+    </div>
+    <div class="split">
+    <div class="stage" data-stage="result"></div>
+    <div class="panel">
+      <p class="quote" id="r-quote"></p>
+      <p id="r-desc"></p>
+      <div class="bars" id="r-bars"></div>
+      <div>
+        <p class="eyebrow">Por que você ficou assim</p>
+        <ul class="why" id="r-why"></ul>
+      </div>
+      <div class="area">
+        <span class="eyebrow">No SENAI, combina com</span>
+        <strong id="r-area"></strong>
+        <span class="muted" id="r-areawhy"></span>
+      </div>
+      <button class="btn" id="btn-accept"><span>Esse sou eu, infelizmente</span></button>
+      <button class="btn ghost" id="btn-card1"><span>Gerar card pro story</span></button>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOBBY -->
+<section class="screen" id="s-lobby" hidden>
+  <div class="wrap">
+    <div class="panel">
+      <div class="topbar">
+        <div class="lvl" id="l-lvl">1</div>
+        <div class="who">
+          <span class="nick" id="l-nick"></span>
+          <span class="chips"><span class="chip" id="l-arch"></span><span class="chip" id="l-net">○ Offline</span></span>
+        </div>
+        <div class="best"><span class="eyebrow">Recorde</span><b id="l-best">0</b></div>
+      </div>
+      <div class="track xp"><div class="fill" id="l-xp"></div></div>
+    </div>
+    <div class="stage" data-stage="lobby"></div>
+    <div class="side">
+    <div class="chips" id="l-ach"></div>
+    <button class="btn big" id="btn-run"><span>Correr agora</span></button>
+    <div class="row3">
+      <button class="btn ghost small" id="btn-rank"><span>Ranking</span></button>
+      <button class="btn ghost small" id="btn-profile"><span>Perfil</span></button>
+      <button class="btn ghost small" id="btn-card2"><span>Card</span></button>
+    </div>
+    <button class="btn ghost small install" id="btn-install2" hidden><span>Instalar o app</span></button>
+    <button class="link" id="btn-reset">Novo jogador (apagar este avatar)</button>
+    </div>
+  </div>
+</section>
+
+<!-- CORRIDA (HUD) -->
+<section class="screen" id="s-run" hidden>
+  <div class="hud">
+    <div><div class="small">Pontos</div><div class="score" id="h-score">0</div></div>
+    <div><div class="small" style="text-align:right">Moedas</div><div class="coins" id="h-coins">0</div></div>
+  </div>
+  <div class="hint" id="h-hint">Deslize ← → para trocar de faixa, ↑ para pular, ↓ para deslizar. No teclado: setas ou WASD.</div>
+  <div class="count" id="h-count"></div>
+</section>
+
+<!-- FIM DE CORRIDA -->
+<section class="screen" id="s-over" hidden>
+  <div class="wrap">
+    <div class="panel over">
+      <p class="death" id="o-death"></p>
+      <div class="scorebig"><b id="o-score">0</b><span class="muted" id="o-detail"></span><span class="badge" id="o-record" hidden>Novo recorde</span></div>
+      <p class="muted" id="o-xp"></p>
+      <p class="muted" id="o-net" aria-live="polite"></p>
+      <div class="chips" id="o-ach"></div>
+      <button class="btn big" id="btn-again"><span>Correr de novo</span></button>
+      <div class="row2">
+        <button class="btn ghost small" id="btn-lobby"><span>Lobby</span></button>
+        <button class="btn ghost small" id="btn-rank2"><span>Ranking</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RANKING -->
+<section class="screen" id="s-rank" hidden>
+  <div class="wrap">
+    <div class="qtop">
+      <button class="iconbtn" id="rk-back" aria-label="Voltar">←</button>
+      <div class="prog"><span class="eyebrow">Ranking</span><span class="muted" id="rk-sub">Melhores corridas</span></div>
+    </div>
+    <ol class="rank" id="rk-list"></ol>
+  </div>
+</section>
+
+<!-- CARD -->
+<div class="modal" id="card" hidden>
+  <img id="card-img" alt="Card do seu resultado no Sipah">
+  <div class="wrap">
+    <p class="muted" style="text-align:center">No celular: segure a imagem e toque em “Salvar imagem”. Depois é só postar.</p>
+    <a class="btn" id="card-dl" href="#" download="sipah.png"><span>Baixar imagem</span></a>
+    <button class="btn ghost" id="card-close"><span>Fechar</span></button>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/content.js"></script>
+<script src="js/net.js"></script>
+<script src="js/pwa.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
