@@ -1,6 +1,6 @@
 /* Service worker do Sipah: guarda o jogo no aparelho para abrir rápido e funcionar sem internet.
    Ao mudar qualquer arquivo do jogo, aumente VERSION para os celulares baixarem a versão nova. */
-const VERSION = 'sipah-v1';
+const VERSION = 'sipah-v2';
 const SHELL = [
   './',
   'index.html',
@@ -18,7 +18,8 @@ const SHELL = [
   'fonts/rubik/600.css',
   'fonts/rubik/800.css',
   'fonts/rubik/900.css',
-  'fonts/permanent-marker/400.css'
+  'fonts/permanent-marker/400.css',
+  'fonts/lilita-one/400.css'
 ];
 
 self.addEventListener('install', e => {

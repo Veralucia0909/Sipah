@@ -113,6 +113,7 @@ app.use(express.json({ limit: '10kb' }));
 app.get('/vendor/three.min.js', (req, res) =>
   res.sendFile(path.join(__dirname, 'node_modules/three/build/three.min.js')));
 app.use('/fonts/rubik', express.static(path.join(__dirname, 'node_modules/@fontsource/rubik')));
+app.use('/fonts/lilita-one', express.static(path.join(__dirname, 'node_modules/@fontsource/lilita-one')));
 app.use('/fonts/permanent-marker', express.static(path.join(__dirname, 'node_modules/@fontsource/permanent-marker')));
 
 app.get('/api/state', (req, res) => res.json(buildState()));

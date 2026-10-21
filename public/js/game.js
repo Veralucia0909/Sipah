@@ -310,12 +310,12 @@ function fitLobby(){
   lcam.aspect = W / H;
   const vf = lcam.fov * Math.PI / 180;
   const tanV = Math.tan(vf/2), tanH = tanV * lcam.aspect;
-  const objH = 3.1, objW = viewW;
+  const objH = 3.6, objW = viewW;
   const dH = (objH * (H / r.height)) / (2 * tanV);
   const dW = (objW * (W / r.width)) / (2 * tanH);
   const d = Math.max(dH, dW);
-  lcam.position.set(0, 1.25 + d*0.12, d);
-  lcam.lookAt(0, 1.2, 0);
+  lcam.position.set(0, 1.45 + d*0.12, d);
+  lcam.lookAt(0, 1.45, 0);
   const cx = r.left + r.width/2, cy = r.top + r.height/2;
   lcam.setViewOffset(W, H, W/2 - cx, H/2 - cy, W, H);
   lcam.updateProjectionMatrix();
@@ -650,7 +650,9 @@ function gameOver(){
 }
 
 /* ===================== FLUXO ===================== */
-let qi = 0, answers = [], locking = false, nickTmp = '';
+let qi = 0, answers = [], locking = false, nickTmp = '', nextTimer = 0;
+// Tempo que o comentário fica na tela antes da próxima pergunta (em milissegundos)
+const READ_TIME = 3000;
 
 function goIntro(){
   mode = 'menu'; renderer.setClearColor(0x000000, 0);
@@ -686,6 +688,7 @@ function renderQ(dir){
     b.append(k, t); b.addEventListener('click', () => pick(i)); box.appendChild(b);
   });
   $('#q-comment').textContent = '';
+  $('#q-next').hidden = true;
   const card = $('#q-card');
   card.classList.remove('enter', 'enter-back'); void card.offsetWidth;
   card.classList.add(dir < 0 ? 'enter-back' : 'enter');
@@ -696,13 +699,22 @@ function pick(i){
   [...$('#q-opts').children].forEach((b, j) => b.classList.toggle('sel', j === i));
   $('#q-comment').textContent = QUESTIONS[qi].opts[i].r;
   $('#q-fill').style.width = ((qi+1) / QUESTIONS.length * 100) + '%';
-  setTimeout(() => {
-    locking = false;
-    if(qi < QUESTIONS.length - 1){ qi++; renderQ(1); } else finishQuiz();
-  }, 1150);
+  const nx = $('#q-next');
+  nx.style.setProperty('--wait', READ_TIME + 'ms');
+  nx.hidden = true; void nx.offsetWidth; nx.hidden = false;
+  $('#btn-next').firstChild.textContent = qi < QUESTIONS.length - 1 ? 'Próxima →' : 'Ver resultado →';
+  clearTimeout(nextTimer);
+  nextTimer = setTimeout(advance, READ_TIME);
 }
+function advance(){
+  if(!locking) return;
+  clearTimeout(nextTimer);
+  locking = false;
+  if(qi < QUESTIONS.length - 1){ qi++; renderQ(1); } else finishQuiz();
+}
+$('#btn-next').addEventListener('click', advance);
 $('#q-back').addEventListener('click', () => {
-  if(locking) return;
+  if(locking){ clearTimeout(nextTimer); locking = false; renderQ(-1); return; }
   if(qi === 0){ goIntro(); return; }
   qi--; renderQ(-1);
 });
@@ -726,16 +738,16 @@ function showResult(reveal){
   $('#r-name').textContent = arch.name;
   $('#r-quote').textContent = '“' + arch.quote + '”';
   $('#r-desc').textContent = arch.desc;
-  const max = Math.max(1, ...AK.map(k => a[k]));
+  const max = Math.max(1, ...AK.map(k => a[k] || 0));
   const bars = $('#r-bars'); bars.innerHTML = '';
   topAttrs(a).forEach(k => {
     const row = document.createElement('div'); row.className = 'bar';
     const n = document.createElement('span'); n.textContent = ATTR[k].n;
     const t = document.createElement('div'); t.className = 't';
     const i = document.createElement('i'); i.style.background = ATTR[k].c; t.appendChild(i);
-    const v = document.createElement('b'); v.textContent = a[k];
+    const v = document.createElement('b'); v.textContent = a[k] || 0;
     row.append(n, t, v); bars.appendChild(row);
-    requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = Math.max(4, a[k]/max*100) + '%'; }));
+    requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = Math.max(4, (a[k] || 0)/max*100) + '%'; }));
   });
   const why = $('#r-why'); why.innerHTML = '';
   const tops = topAttrs(a);
@@ -846,7 +858,7 @@ function avatarSnapshot(arch, attrs){
   const av = buildAvatar(arch, attrs); av.rotation.y = -0.35; sc.add(av);
   animateAvatar(av, 0.4, 'idle');
   const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-  cam.position.set(0, 1.9, 7.4); cam.lookAt(0, 1.2, 0);
+  cam.position.set(0, 2.1, 8.2); cam.lookAt(0, 1.45, 0);
   snapR.render(sc, cam);
   return snapR.domElement;
 }
@@ -856,7 +868,7 @@ function wrapText(x, text, maxW){
   if(cur) lines.push(cur); return lines;
 }
 async function makeCard(){
-  try{ await Promise.all([document.fonts.load('100px "Permanent Marker"'), document.fonts.load('900 40px Rubik'), document.fonts.load('600 40px Rubik')]); }catch(e){}
+  try{ await Promise.all([document.fonts.load('100px "Permanent Marker"'), document.fonts.load('100px "Lilita One"'), document.fonts.load('900 40px Rubik'), document.fonts.load('600 40px Rubik')]); }catch(e){}
   const arch = archById(profile.archId), a = profile.attrs;
   const c = document.createElement('canvas'); c.width = 1080; c.height = 1920;
   const x = c.getContext('2d');
@@ -868,6 +880,7 @@ async function makeCard(){
   x.fillRect(-700, 70, 1400, 26); x.fillRect(-500, 112, 900, 12);
   x.restore();
   const marker = '"Permanent Marker", "Comic Sans MS", cursive';
+  const display = '"Lilita One", "Arial Rounded MT Bold", Rubik, sans-serif';
   x.save(); x.translate(330, 110); x.rotate(-0.14); x.scale(1.3, 1.3);
   x.beginPath(); x.moveTo(8,70); x.lineTo(14,18); x.lineTo(38,44); x.lineTo(60,6); x.lineTo(82,44); x.lineTo(106,18); x.lineTo(112,70); x.closePath();
   x.fillStyle = '#c8f31d'; x.strokeStyle = '#07050f'; x.lineWidth = 8; x.lineJoin = 'round'; x.stroke(); x.fill();
@@ -881,23 +894,23 @@ async function makeCard(){
   x.textAlign = 'center';
   x.fillStyle = '#c8f31d'; x.font = '900 46px Rubik, system-ui, sans-serif';
   x.fillText('VOCÊ É:', 540, 520);
-  x.fillStyle = '#ffffff'; x.font = `96px ${marker}`;
+  x.fillStyle = '#ffffff'; x.font = `100px ${display}`;
   const nl = wrapText(x, arch.name.toUpperCase(), 980);
   nl.forEach((l, i) => x.fillText(l, 540, 620 + i*100));
   const ny = 620 + (nl.length - 1)*100;
   const snap = avatarSnapshot(arch, a);
-  x.drawImage(snap, 115, ny + 10, 850, 850);
-  let y = ny + 900;
-  x.fillStyle = '#c8f31d'; x.font = `54px ${marker}`;
+  x.drawImage(snap, 160, ny + 30, 760, 760);
+  let y = ny + 860;
+  x.fillStyle = '#c8f31d'; x.font = `54px ${display}`;
   wrapText(x, '“' + arch.quote + '”', 940).forEach(l => { x.fillText(l, 540, y); y += 64; });
   y += 20;
-  const tops = topAttrs(a).slice(0, 3), max = Math.max(1, ...AK.map(k => a[k]));
+  const tops = topAttrs(a).slice(0, 3), max = Math.max(1, ...AK.map(k => a[k] || 0));
   x.textAlign = 'left';
   tops.forEach(k => {
     x.fillStyle = '#ffffff'; x.font = '600 34px Rubik, system-ui, sans-serif';
     x.fillText(ATTR[k].n, 120, y);
     x.fillStyle = '#251c4c'; x.fillRect(470, y - 26, 490, 26);
-    x.fillStyle = ATTR[k].c; x.fillRect(470, y - 26, 490 * Math.max(0.05, a[k]/max), 26);
+    x.fillStyle = ATTR[k].c; x.fillRect(470, y - 26, 490 * Math.max(0.05, (a[k] || 0)/max), 26);
     y += 58;
   });
   y += 20;

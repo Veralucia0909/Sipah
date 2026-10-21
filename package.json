@@ -6,8 +6,11 @@
   "scripts": {
     "start": "node server.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "@fontsource/lilita-one": "5.0.12",
     "@fontsource/permanent-marker": "5.0.13",
     "@fontsource/rubik": "5.0.20",
     "express": "4.21.1",

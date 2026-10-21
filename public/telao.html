@@ -11,12 +11,14 @@
 <link rel="stylesheet" href="fonts/rubik/800.css">
 <link rel="stylesheet" href="fonts/rubik/900.css">
 <link rel="stylesheet" href="fonts/permanent-marker/400.css">
+<link rel="stylesheet" href="fonts/lilita-one/400.css">
 <style>
 /* Layout: placar à esquerda, "raio-x do estande" no meio, QR code e últimas corridas à direita */
 :root{
   --ink:#0d0a1a; --glow:#2c1766; --panel:#1c153a; --panel2:#251c4c; --line:#3b2f70;
   --fg:#fbfaff; --muted:#b9b0de; --lime:#c8f31d; --rosa:#ff3ea5; --shadow:#07050f;
-  --display:"Permanent Marker","Marker Felt","Comic Sans MS",cursive;
+  --brand:"Permanent Marker","Marker Felt","Comic Sans MS",cursive;
+  --display:"Lilita One","Arial Rounded MT Bold","Rubik",system-ui,sans-serif;
   --body:"Rubik",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --u:min(1vw,1.78vh);
   color-scheme:dark;
@@ -30,7 +32,7 @@ body{background:radial-gradient(110% 80% at 30% 0%,var(--glow) 0%,var(--ink) 60%
   padding-block:max(14px,calc(var(--u)*2)) max(14px,calc(var(--u)*2))}
 .app{min-height:calc(100vh - max(28px,calc(var(--u)*4)));display:grid;grid-template-rows:auto 1fr;gap:max(14px,calc(var(--u)*2))}
 header{display:flex;align-items:center;gap:max(14px,calc(var(--u)*2.4));flex-wrap:wrap}
-.logo{font-family:var(--display);font-size:max(44px,calc(var(--u)*6));line-height:1;transform:rotate(-5deg);
+.logo{font-family:var(--brand);font-size:max(44px,calc(var(--u)*6));line-height:1;transform:rotate(-5deg);
   text-shadow:.06em .06em 0 var(--lime),-.035em -.035em 0 var(--shadow),.035em -.035em 0 var(--shadow),-.035em .035em 0 var(--shadow),.09em .1em 0 var(--shadow)}
 .live{display:inline-flex;align-items:center;gap:.5em;background:var(--rosa);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:.8em;padding:.4em .8em;border-radius:.5em}
 .live i{width:.7em;height:.7em;border-radius:50%;background:var(--fg);animation:pulse 1.2s infinite}

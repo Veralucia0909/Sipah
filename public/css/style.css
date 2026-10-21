@@ -14,7 +14,9 @@
   --azul:#1f6bff;
   --rosa:#ff3ea5;
   --shadow:#07050f;
-  --display:"Permanent Marker","Marker Felt","Comic Sans MS",cursive;
+  /* --brand: só o logo "Sipah". --display: títulos, perguntas e placares */
+  --brand:"Permanent Marker","Marker Felt","Comic Sans MS",cursive;
+  --display:"Lilita One","Arial Rounded MT Bold","Rubik",system-ui,sans-serif;
   --body:"Rubik",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:dark;
 }
@@ -45,9 +47,9 @@ h1,h2,h3,p{margin:0}
 /* Marca */
 .brand{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:2vh}
 .brand svg{width:64px;height:44px;margin-bottom:-14px;transform:rotate(-8deg) translateX(-18px);position:relative;z-index:1}
-.logo{font-family:var(--display);font-size:clamp(64px,min(24vw,17vh),132px);line-height:.95;color:var(--fg);transform:rotate(-6deg);
+.logo{font-family:var(--brand);font-size:clamp(64px,min(24vw,17vh),132px);line-height:.95;color:var(--fg);transform:rotate(-6deg);
   text-shadow:4px 4px 0 var(--lime),-3px -3px 0 var(--shadow),3px -3px 0 var(--shadow),-3px 3px 0 var(--shadow),6px 7px 0 var(--shadow)}
-.tag{font-family:var(--display);color:var(--lime);font-size:15px;transform:rotate(-3deg);margin-top:10px;text-align:center}
+.tag{font-family:var(--brand);color:var(--lime);font-size:15px;transform:rotate(-3deg);margin-top:10px;text-align:center}
 
 .eyebrow{font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}
 .lead{font-size:19px;font-weight:600;text-wrap:balance}
@@ -91,7 +93,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--rosa);outline-o
 .opt .k{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--lime);display:grid;place-items:center;font-family:var(--display);font-size:18px}
 .opt.sel{border-color:var(--lime);background:var(--glow)}
 .opt.sel .k{background:var(--lime);color:var(--ink)}
-.comment{font-family:var(--display);color:var(--lime);font-size:20px;min-height:2.6em;transform:rotate(-2deg);text-align:center;text-wrap:balance}
+.comment{font-family:var(--display);color:var(--lime);font-size:22px;min-height:2.6em;transform:rotate(-2deg);text-align:center;text-wrap:balance}
+.next{display:flex;flex-direction:column;align-items:center;gap:8px}
+.next .timer{width:140px;height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.next .timer i{display:block;height:100%;width:100%;background:var(--lime);transform-origin:left;animation:drain var(--wait,3s) linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.next .btn{width:auto;min-height:48px;padding:12px 28px;font-size:16px}
 .enter{animation:inR .32s cubic-bezier(.2,.9,.3,1.2)}
 .enter-back{animation:inL .32s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes inR{from{opacity:0;transform:translateX(40px) skewX(-6deg)}to{opacity:1;transform:none}}
