@@ -1,0 +1,8 @@
+/* Fontes do Sipah, guardadas dentro do projeto (funcionam offline e na Vercel).
+   Rubik e Lilita One: SIL Open Font License. Permanent Marker: Apache License 2.0. */
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/rubik-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 600; font-display: swap; src: url(../fonts/rubik-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 800; font-display: swap; src: url(../fonts/rubik-latin-800-normal.woff2) format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 900; font-display: swap; src: url(../fonts/rubik-latin-900-normal.woff2) format("woff2"); }
+@font-face { font-family: "Lilita One"; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/lilita-one-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Permanent Marker"; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/permanent-marker-latin-400-normal.woff2) format("woff2"); }

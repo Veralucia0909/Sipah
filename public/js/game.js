@@ -70,174 +70,31 @@ const GRAD = (() => {
 })();
 const mat = (c, extra) => new THREE.MeshToonMaterial(Object.assign({color:c, gradientMap:GRAD}, extra||{}));
 
-/* ===================== AVATAR MODULAR ===================== */
-function buildAvatar(arch, attrs){
-  attrs = attrs || {};
-  const outer = new THREE.Group();
-  const g = new THREE.Group(); outer.add(g);
-  const P = {body:g};
-  const top = topAttrs(attrs)[0] || 'caos';
-  const c2 = ATTR[top].c;
-  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
-  const headS = 1 + clamp(attrs.caos||0, 0, 8) * 0.025;
-  const bodyW = 1 + clamp(attrs.teimosia||0, 0, 8) * 0.03;
-  const mB = mat(arch.color), m2 = mat(c2), mW = mat('#ffffff'), mK = mat('#141018'), mDark = mat('#1b1530');
-  const mLime = mat('#c8f31d', {emissive:'#3d4d00'});
+/* ===================== AVATAR ===================== */
+// O visual vem de js/avatar.js. A semente usa o id do jogador e as respostas,
+// então a mesma pessoa sempre recebe o mesmo personagem.
+const avatarSeed = p => p ? (p.id || p.nick || 'x') + ':' + (p.answers || []).join('') : 'visitante';
+function buildAvatar(arch, seed){
+  const inner = buildAvatar2(arch.id, seed);
+  const wrap = new THREE.Group(); wrap.add(inner);   // a corrida mexe na escala do wrap, não na do personagem
+  wrap.userData.P = inner.userData.P;
+  wrap.userData.look = inner.userData;
+  return wrap;
+}
 
-  const torso = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 18), mB);
-  torso.scale.set(0.95*bodyW, 1.05, 0.85); torso.position.y = 0.95; g.add(torso);
-  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.32, 18, 14), m2);
-  belly.scale.set(1*bodyW, 1.1, 0.5); belly.position.set(0, 0.88, 0.28); g.add(belly);
-
-  const head = new THREE.Group(); head.position.y = 1.72; g.add(head); P.head = head;
-  const hs = new THREE.Mesh(new THREE.SphereGeometry(0.6, 28, 22), mB); hs.scale.setScalar(headS); head.add(hs);
-  const ez = 0.5 * headS;
-  [-1,1].forEach(s => {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), mW);
-    eye.position.set(s*0.22, 0.06, ez); eye.scale.z = 0.7; head.add(eye);
-    const pr = arch.acc === 'npc' ? 0.05 : 0.085;
-    const pup = new THREE.Mesh(new THREE.SphereGeometry(pr, 12, 10), mK);
-    pup.position.set(s*0.22 + (arch.acc==='caos'||arch.acc==='spikes' ? s*0.04 : 0), 0.05, ez + 0.11); head.add(pup);
-    if(arch.acc === 'mug'){
-      const lid = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12, 0, Math.PI*2, 0, Math.PI/2), mB);
-      lid.position.set(s*0.22, 0.03, ez); lid.scale.z = 0.75; head.add(lid);
-      const bag = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.025, 8, 16, Math.PI), mat('#6a4fa8'));
-      bag.rotation.z = Math.PI; bag.position.set(s*0.22, -0.1, ez + 0.06); head.add(bag);
-    }
-    if(arch.acc === 'crown'){
-      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.05), mK);
-      brow.position.set(s*0.22, 0.27, ez + 0.06); brow.rotation.z = -s*0.25; head.add(brow);
-    }
-  });
-  if(arch.acc === 'mug'){
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 0.04), mK);
-    m.position.set(0, -0.22, ez + 0.08); head.add(m);
-  } else {
-    const big = arch.acc === 'crown' || arch.acc === 'spikes';
-    const m = new THREE.Mesh(new THREE.TorusGeometry(big ? 0.16 : 0.11, 0.03, 8, 18, Math.PI), mK);
-    m.rotation.z = Math.PI; m.position.set(0, -0.15, ez + 0.07); head.add(m);
-  }
-
-  [-1,1].forEach(s => {
-    const piv = new THREE.Group(); piv.position.set(s*0.2, 0.52, 0); g.add(piv);
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.42, 12), mDark);
-    leg.position.y = -0.2; piv.add(leg);
-    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 10), m2);
-    foot.scale.set(1, 0.7, 1.4); foot.position.set(0, -0.44, 0.06); piv.add(foot);
-    P[s < 0 ? 'legL' : 'legR'] = piv;
-    const ap = new THREE.Group(); ap.position.set(s*0.5*bodyW, 1.18, 0); ap.rotation.z = s*0.25; g.add(ap);
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.42, 10), mB);
-    arm.position.y = -0.2; ap.add(arm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), mB);
-    hand.position.y = -0.45; ap.add(hand);
-    P[s < 0 ? 'armL' : 'armR'] = ap;
-  });
-
-  const hy = 0.6 * headS;
-  switch(arch.acc){
-    case 'spikes': {
-      for(let i = 0; i < 7; i++){
-        const a = -1.15 + i * (2.3/6);
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.5, 10), i%2 ? m2 : mLime);
-        cone.position.set(Math.sin(a)*0.5*headS, Math.cos(a)*0.5*headS + 0.08, -0.05);
-        cone.rotation.z = -a; head.add(cone);
-      }
-      break;
-    }
-    case 'tie': {
-      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 12, 0, Math.PI*2, 0, Math.PI/2), mDark);
-      hair.scale.set(headS, 0.55*headS, headS); hair.position.y = 0.18; hair.rotation.x = -0.25; head.add(hair);
-      [-1,1].forEach(s => {
-        const gl = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.03, 8, 20), mK);
-        gl.position.set(s*0.22, 0.06, ez + 0.13); head.add(gl);
-      });
-      const br = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.03), mK); br.position.set(0, 0.08, ez + 0.13); head.add(br);
-      const knot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.06), m2); knot.position.set(0, 1.3, 0.4); g.add(knot);
-      const tie = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.45, 4), m2);
-      tie.rotation.z = Math.PI; tie.position.set(0, 1.03, 0.43); g.add(tie);
-      break;
-    }
-    case 'goggles': {
-      [-1,1].forEach(s => {
-        const gg = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.06, 10, 22), m2);
-        gg.position.set(s*0.22, 0.34, ez - 0.02); gg.rotation.x = -0.35; head.add(gg);
-        const lens = new THREE.Mesh(new THREE.CircleGeometry(0.15, 20), mat('#9be7ff', {emissive:'#1d4e66'}));
-        lens.position.set(s*0.22, 0.34, ez - 0.01); lens.rotation.x = -0.35; head.add(lens);
-      });
-      const strap = new THREE.Mesh(new THREE.TorusGeometry(0.6*headS, 0.04, 8, 32), m2);
-      strap.rotation.x = Math.PI/2 - 0.35; strap.position.y = 0.3; head.add(strap);
-      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 8), mK);
-      ant.position.set(0.15, hy + 0.2, 0); ant.rotation.z = -0.2; head.add(ant);
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), mLime);
-      ball.position.set(0.2, hy + 0.47, 0); head.add(ball); P.ball = ball;
-      break;
-    }
-    case 'crown': {
-      const gold = mat('#ffd21a', {emissive:'#4a3500'});
-      const cr = new THREE.Group(); cr.position.y = hy - 0.02; cr.rotation.z = -0.12; head.add(cr);
-      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.37, 0.18, 24, 1, true), gold);
-      band.material.side = THREE.DoubleSide; cr.add(band);
-      for(let i = 0; i < 6; i++){
-        const a = i/6 * Math.PI*2;
-        const pt = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 8), gold);
-        pt.position.set(Math.sin(a)*0.33, 0.2, Math.cos(a)*0.33); cr.add(pt);
-        const gem = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), mat('#ff3ea5'));
-        gem.position.set(Math.sin(a)*0.37, 0, Math.cos(a)*0.37); cr.add(gem);
-      }
-      const capeM = mat(c2); capeM.side = THREE.DoubleSide;
-      const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.05, 1, 4), capeM);
-      cape.position.set(0, 0.82, -0.44); cape.rotation.x = 0.18; g.add(cape); P.cape = cape;
-      break;
-    }
-    case 'mug': {
-      const cup = new THREE.Group(); cup.position.set(0, -0.55, 0.08); P.armR.add(cup);
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.22, 14), mW); cup.add(body);
-      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, 6, 12), mW); handle.position.x = 0.13; cup.add(handle);
-      const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.1, 14), mat('#5a3115')); coffee.rotation.x = -Math.PI/2; coffee.position.y = 0.111; cup.add(coffee);
-      const tie = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.4, 4), m2);
-      tie.rotation.set(0.2, 0, Math.PI - 0.35); tie.position.set(0.08, 1.05, 0.42); g.add(tie);
-      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.62, 20, 10, 0, Math.PI*2, 0, Math.PI/2), mDark);
-      hair.scale.set(headS*1.02, 0.4*headS, headS*1.02); hair.position.y = 0.2; head.add(hair);
-      break;
-    }
-    case 'npc': {
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 10, 0, Math.PI*2, 0, Math.PI/2), m2);
-      cap.scale.set(headS*1.02, 0.5*headS, headS*1.02); cap.position.y = 0.16; head.add(cap);
-      const brim = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 0.4), m2);
-      brim.position.set(0, 0.2, ez + 0.08); head.add(brim);
-      const bang = new THREE.Group(); bang.position.y = hy + 0.6; head.add(bang); P.bang = bang;
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.36, 0.12), mLime); bar.position.y = 0.1; bang.add(bar);
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), mLime); dot.position.y = -0.18; bang.add(dot);
-      break;
-    }
-    case 'headphones': {
-      const band = new THREE.Mesh(new THREE.TorusGeometry(0.64*headS, 0.05, 8, 26, Math.PI), mDark);
-      band.position.y = 0.04; head.add(band);
-      [-1,1].forEach(s => {
-        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.14, 18), m2);
-        cup.rotation.z = Math.PI/2; cup.position.set(s*0.63*headS, 0.02, 0); head.add(cup);
-      });
-      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.17, 0.08), mK);
-      visor.position.set(0, 0.07, ez + 0.1); head.add(visor);
-      const line = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.03, 0.02), mLime);
-      line.position.set(0, 0.07, ez + 0.15); head.add(line);
-      break;
-    }
-    case 'hardhat': {
-      const y = mat('#ffd21a');
-      const hat = new THREE.Mesh(new THREE.SphereGeometry(0.64, 24, 12, 0, Math.PI*2, 0, Math.PI/2), y);
-      hat.scale.setScalar(headS); hat.position.y = 0.14; head.add(hat);
-      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.8*headS, 0.8*headS, 0.05, 28), y);
-      brim.position.y = 0.15; head.add(brim);
-      const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.1*headS), y); ridge.position.y = 0.6*headS + 0.1; head.add(ridge);
-      const wr = new THREE.Group(); wr.position.set(0, -0.55, 0.05); P.armL.add(wr);
-      const sh = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.42, 0.06), mat('#c9c4dc')); wr.add(sh);
-      const jaw = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.035, 6, 12, Math.PI*1.4), mat('#c9c4dc')); jaw.position.y = 0.25; wr.add(jaw);
-      break;
-    }
-  }
-  outer.userData.P = P;
-  return outer;
+// Descrição do visual sorteado, para a tela de resultado
+const LOOK_NAMES = {
+  spiky:'cabelo espetado', slick:'topete de executivo', frizz:'cabelo de cientista maluco', volume:'cabelão de protagonista',
+  messy:'cabelo de quem acabou de acordar', bun:'coque', mohawk:'moicano', afro:'black power', ponytail:'rabo de cavalo',
+  bald:'careca brilhando', beanie:'gorro', propeller:'chapéu de hélice', party:'chapéu de festa',
+  mustache:'bigode', unibrow:'monocelha', freckles:'sardas', bandaid:'curativo na bochecha', bubblegum:'bola de chiclete',
+  sweat:'gota de suor', bignose:'narigão de palhaço', beard:'barba', earring:'brinco',
+  derp:'olho vesgo', wink:'piscadinha', uneven:'um olho maior que o outro', teeth:'dentuço', braces:'aparelho nos dentes', tongue:'língua de fora'
+};
+function describeLook(look){
+  const parts = [look.hairK, look.eyeK, look.mouthK, ...(look.extras || [])].map(k => LOOK_NAMES[k]).filter(Boolean);
+  if(!parts.length) return '';
+  return parts.length === 1 ? parts[0] : parts.slice(0, -1).join(', ') + ' e ' + parts[parts.length - 1];
 }
 
 function animateAvatar(av, t, state){
@@ -259,12 +116,12 @@ function animateAvatar(av, t, state){
   } else {
     const s = Math.sin(t*2.2);
     P.legL.rotation.x = 0; P.legR.rotation.x = 0;
-    P.armL.rotation.x = s*0.15; P.armR.rotation.x = -s*0.15;
+    P.armL.rotation.x = (P.armBase || 0) + s*0.15; P.armR.rotation.x = (P.armBase || 0) - s*0.15;
     P.body.position.y = s*0.03;
     P.head.rotation.z = s*0.06;
   }
-  if(P.bang) P.bang.position.y = (P.bang.userData.y0 ?? (P.bang.userData.y0 = P.bang.position.y)) + Math.sin(t*4)*0.08;
-  if(P.ball) P.ball.scale.setScalar(1 + Math.sin(t*6)*0.15);
+  if(P.float) P.float.position.y = (P.float.userData.y0 ?? (P.float.userData.y0 = P.float.position.y)) + Math.sin(t*4)*0.08;
+  if(P.spin) P.spin.rotation.y = t * (state === 'run' ? 22 : 6);
   if(P.cape) P.cape.rotation.x = 0.18 + (state === 'run' ? 0.5 + Math.sin(t*16)*0.08 : Math.sin(t*1.5)*0.04);
 }
 
@@ -292,7 +149,7 @@ function setLobby(list, width){
     const h = new THREE.Group();
     h.position.x = (i - (list.length-1)/2) * gap;
     h.add(pedestal());
-    const av = buildAvatar(item.arch, item.attrs);
+    const av = buildAvatar(item.arch, item.seed);
     if(list.length > 1) av.rotation.y = (i - 1) * -0.35;
     h.add(av);
     h.userData = {av, pop:null, phase:i*1.3};
@@ -310,7 +167,7 @@ function fitLobby(){
   lcam.aspect = W / H;
   const vf = lcam.fov * Math.PI / 180;
   const tanV = Math.tan(vf/2), tanH = tanV * lcam.aspect;
-  const objH = 3.6, objW = viewW;
+  const objH = 3.9, objW = viewW;
   const dH = (objH * (H / r.height)) / (2 * tanV);
   const dW = (objW * (W / r.width)) / (2 * tanH);
   const d = Math.max(dH, dW);
@@ -494,7 +351,7 @@ async function startRun(){
   if(!OBS) makeObsKit();
   clearRun();
   const arch = archById(profile.archId);
-  player = buildAvatar(arch, profile.attrs);
+  player = buildAvatar(arch, avatarSeed(profile));
   player.rotation.y = Math.PI; run.add(player);
   lane = 0; px = 0; py = 0; vy = 0; slideT = 0;
   speed = 14; dist = 0; runT = 0; coins = 0; score = 0; spawnAcc = 30;
@@ -640,12 +497,12 @@ function gameOver(){
   $('#h-count').textContent = '';
   const net = $('#o-net');
   if(Net.online()){
-    net.textContent = 'Enviando pro telão…';
+    net.textContent = 'Enviando pro ranking…';
     Net.runFinish({score, coins, dist:Math.floor(dist)}).then(r => {
-      if(r && r.ok) net.textContent = r.isBest ? `Você está em #${r.position} de ${r.total} no telão hoje.` : `Seu recorde de hoje continua no telão (#${r.position}).`;
-      else net.textContent = 'Não deu pra enviar essa corrida pro telão.';
+      if(r && r.ok) net.textContent = r.isBest ? `Você está em #${r.position} de ${r.total} no ranking de hoje.` : `Seu recorde de hoje continua valendo (#${r.position} no ranking).`;
+      else net.textContent = 'Não deu pra enviar essa corrida pro ranking.';
     });
-  } else net.textContent = 'Sem conexão com o telão. A corrida ficou salva neste aparelho.';
+  } else net.textContent = 'Sem conexão com o ranking. A corrida ficou salva neste aparelho.';
   show('s-over');
 }
 
@@ -657,9 +514,9 @@ const READ_TIME = 3000;
 function goIntro(){
   mode = 'menu'; renderer.setClearColor(0x000000, 0);
   setLobby([
-    {arch:archById('caos'), attrs:{caos:6, improviso:2}},
-    {arch:archById('prota'), attrs:{competitividade:6}},
-    {arch:archById('clt'), attrs:{teimosia:6, estrategia:2}}
+    {arch:archById('caos'), seed:'pessoa-14'},
+    {arch:archById('prota'), seed:'pessoa-15'},
+    {arch:archById('clt'), seed:'pessoa-12'}
   ], 7.4);
   show('s-intro');
 }
@@ -752,8 +609,10 @@ function showResult(reveal){
   const why = $('#r-why'); why.innerHTML = '';
   const tops = topAttrs(a);
   const li0 = document.createElement('li');
-  li0.textContent = `Seus atributos mais fortes: ${ATTR[tops[0]].n} (${a[tops[0]]}) e ${ATTR[tops[1]].n} (${a[tops[1]]}). A barriga e os pés ficaram na cor de ${ATTR[tops[0]].n}.`;
+  li0.textContent = `Seus atributos mais fortes: ${ATTR[tops[0]].n} (${a[tops[0]]}) e ${ATTR[tops[1]].n} (${a[tops[1]]}).`;
   why.appendChild(li0);
+  const look = describeLook(buildAvatar2(arch.id, avatarSeed(profile)).userData);
+  if(look){ const lv = document.createElement('li'); lv.textContent = `Seu visual é só seu: ${look}.`; why.appendChild(lv); }
   decisive(profile.answers, arch).forEach(d => {
     const li = document.createElement('li');
     li.textContent = `Você respondeu “${QUESTIONS[d.qi].opts[d.oi].t}”`;
@@ -762,7 +621,7 @@ function showResult(reveal){
   $('#r-area').textContent = arch.area;
   $('#r-areawhy').textContent = arch.areaWhy;
   $('#btn-accept').firstChild.textContent = reveal ? 'Esse sou eu, infelizmente' : 'Voltar pro lobby';
-  setLobby([{arch, attrs:a}], 3);
+  setLobby([{arch, seed:avatarSeed(profile)}], 3);
   if(reveal) popHolder(0);
   show('s-result');
 }
@@ -781,9 +640,10 @@ function goLobby(){
   const box = $('#l-ach'); box.innerHTML = '';
   const got = profile.ach || [];
   ACH.forEach(a => { const s = document.createElement('span'); s.className = 'chip' + (got.includes(a.id) ? ' on' : ''); s.textContent = (got.includes(a.id) ? '★ ' : '☆ ') + a.n; box.appendChild(s); });
-  setLobby([{arch, attrs:profile.attrs}], 3);
+  setLobby([{arch, seed:avatarSeed(profile)}], 3);
   Net.join(profile);
-  setNetChip(Net.online());
+  setNetChip(Net.online(), Net.mode());
+  rankWatch(false);
   resetArmed = false; $('#btn-reset').textContent = 'Novo jogador (apagar este avatar)';
   show('s-lobby');
 }
@@ -795,10 +655,10 @@ $('#btn-profile').addEventListener('click', () => showResult(false));
 function rankRows(){
   const st = Net.state();
   if(Net.online() && st){
-    $('#rk-sub').textContent = `Hoje no estande · ${st.totalPlayers} jogadores · ${st.totalRuns} corridas`;
+    $('#rk-sub').textContent = `${Net.mode() === 'global' ? 'Ranking global de hoje' : 'Hoje no estande'} · ${st.totalPlayers} jogadores · ${st.totalRuns} corridas`;
     return st.top.map(r => ({nick:r.nick, arch:r.archId, score:r.score, me:profile && r.id === profile.id}));
   }
-  $('#rk-sub').textContent = 'Sem conexão com o telão: melhores corridas deste aparelho';
+  $('#rk-sub').textContent = 'Sem conexão: melhores corridas deste aparelho';
   return store.get('sipah.rank', []).slice(0, 10).map(r => ({nick:r.nick, arch:r.arch, score:r.score, me:profile && r.nick === profile.nick}));
 }
 function renderRank(){
@@ -820,12 +680,19 @@ function showRank(){
   mode = 'menu'; renderer.setClearColor(0x000000, 0); clearRun();
   setLobby([], 3);
   renderRank();
+  rankWatch(true);
   show('s-rank');
 }
+// enquanto o ranking está aberto, o placar se atualiza sozinho
+let rankWatching = false;
+function rankWatch(on){
+  if(on === rankWatching) return;
+  rankWatching = on; Net.watch(on, 4000);
+}
 Net.onState(() => { if(!$('#s-rank').hidden) renderRank(); });
-function setNetChip(on){
+function setNetChip(on, m){
   const c = $('#l-net'); if(!c) return;
-  c.textContent = on ? '● Telão conectado' : '○ Offline';
+  c.textContent = !on ? '○ Offline' : m === 'local' ? '● Telão do estande' : '● Ranking global';
   c.classList.toggle('on', on);
 }
 Net.onStatus(setNetChip);
@@ -846,7 +713,7 @@ $('#btn-reset').addEventListener('click', () => {
 
 /* ===================== CARD PRO STORY ===================== */
 let snapR = null;
-function avatarSnapshot(arch, attrs){
+function avatarSnapshot(arch, seed){
   if(!snapR){
     snapR = new THREE.WebGLRenderer({antialias:true, alpha:true, preserveDrawingBuffer:true});
     snapR.setPixelRatio(1); snapR.setSize(900, 900, false); snapR.setClearColor(0x000000, 0);
@@ -855,7 +722,7 @@ function avatarSnapshot(arch, attrs){
   sc.add(new THREE.HemisphereLight(0xffffff, 0x3a2a70, 0.85));
   const d = new THREE.DirectionalLight(0xffffff, 0.75); d.position.set(3, 6, 6); sc.add(d);
   sc.add(pedestal());
-  const av = buildAvatar(arch, attrs); av.rotation.y = -0.35; sc.add(av);
+  const av = buildAvatar(arch, seed); av.rotation.y = -0.35; sc.add(av);
   animateAvatar(av, 0.4, 'idle');
   const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
   cam.position.set(0, 2.1, 8.2); cam.lookAt(0, 1.45, 0);
@@ -898,9 +765,11 @@ async function makeCard(){
   const nl = wrapText(x, arch.name.toUpperCase(), 980);
   nl.forEach((l, i) => x.fillText(l, 540, 620 + i*100));
   const ny = 620 + (nl.length - 1)*100;
-  const snap = avatarSnapshot(arch, a);
-  x.drawImage(snap, 160, ny + 30, 760, 760);
-  let y = ny + 860;
+  const snap = avatarSnapshot(arch, avatarSeed(profile));
+  // nome em 2 linhas: personagem um pouco menor para o rodapé não encavalar
+  const snapSize = 760 - (nl.length - 1) * 120;
+  x.drawImage(snap, 540 - snapSize / 2, ny + 30, snapSize, snapSize);
+  let y = ny + snapSize + 100;
   x.fillStyle = '#c8f31d'; x.font = `54px ${display}`;
   wrapText(x, '“' + arch.quote + '”', 940).forEach(l => { x.fillText(l, 540, y); y += 64; });
   y += 20;

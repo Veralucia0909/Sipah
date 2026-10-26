@@ -33,32 +33,34 @@ Os celulares precisam estar **na mesma rede Wi-Fi** do computador.
 
 ---
 
-## Duas formas de usar no Mundo SENAI
+## Ranking global (Supabase) e modo estande
 
-### A) Rede local no estande (recomendado para o dia)
+O jogo escolhe sozinho onde guardar o ranking:
 
-Leve um **roteador próprio**. O Wi-Fi de evento costuma ser lotado e às vezes bloqueia conexões entre aparelhos.
+| Modo | Quando | Onde fica o ranking |
+|---|---|---|
+| **Global** | Tem internet (Vercel, celular com 4G, Wi-Fi do evento) | Banco **Supabase**, projeto `sipah`. Todo mundo vê o mesmo ranking, de qualquer lugar |
+| **Estande** | Sem internet, com o notebook rodando `npm start` | Servidor local com Socket.io, arquivo `data/sipah.json` |
+| **Offline** | Nenhum dos dois responde | Só no próprio celular |
 
-1. Ligue o notebook no roteador e rode `npm start`.
-2. Deixe o telão aberto. Os visitantes conectam no Wi-Fi do estande e escaneiam o QR.
+A configuração fica em **`public/js/config.js`**. Para forçar o modo estande, deixe `supabaseUrl: ''`.
 
-Tudo funciona **sem internet**: Three.js, fontes e Socket.io são servidos pelo próprio notebook.
+### Como o banco protege o ranking
 
-> **Limitação:** no endereço `http://192.168...` o navegador **não oferece "Instalar app"**. Os navegadores só permitem instalar PWA em **HTTPS**. O jogo funciona normalmente, só sem o botão de instalar.
+- As tabelas (`sipah_players`, `sipah_runs`, `sipah_run_tokens`) ficam **fechadas**: ninguém lê nem grava direto nelas.
+- O jogo só consegue chamar 4 funções: `sipah_join`, `sipah_run_start`, `sipah_run_finish` e `sipah_state`.
+- Ao começar a corrida, o banco entrega um "bilhete" com a hora. Ao terminar, ele mede o tempo sozinho e **recusa pontuação impossível**. Cada bilhete vale uma vez só.
+- A chave em `config.js` é do tipo *publishable*: foi feita para ficar no navegador e só dá acesso a essas funções.
 
-### B) Online com HTTPS (para instalar como app)
+### Publicar na Vercel
 
-Publique num serviço gratuito com HTTPS e WebSocket, como o [Render](https://render.com):
+O arquivo `vercel.json` manda a Vercel publicar a pasta `public/` como site. É só enviar para o GitHub (`git push`) e a Vercel atualiza sozinha. O QR code do telão usa o endereço do próprio site (ex.: `https://sipah.vercel.app/`).
 
-1. Suba esta pasta num repositório no GitHub.
-2. No Render: **New → Web Service**, escolha o repositório.
-   - Build command: `npm install`
-   - Start command: `npm start`
-3. Em **Environment**, crie `PUBLIC_URL` com o endereço que o Render der (ex.: `https://sipah.onrender.com/`). É esse endereço que vai no QR code.
+### No estande sem internet
 
-Aí o celular mostra **"Instalar o app"** (Android/Chrome) ou a dica **"Adicionar à Tela de Início"** (iPhone/Safari).
+Leve um roteador próprio, ligue o notebook nele e rode `npm start`. Abra o telão pelo endereço que aparece no terminal. Se não houver internet, o jogo cai sozinho para o servidor local.
 
-> No plano grátis do Render, o servidor "dorme" depois de 15 minutos parado e o arquivo de ranking é apagado quando o servidor reinicia. Para o dia do evento, abra o telão antes e mantenha alguém jogando. Para guardar dados de verdade, troque o arquivo JSON por um banco (ex.: Supabase/PostgreSQL).
+> No endereço `http://192.168...` o navegador não oferece "Instalar app" (PWA só instala em HTTPS). Na Vercel, instala normalmente.
 
 ---
 
@@ -66,7 +68,8 @@ Aí o celular mostra **"Instalar o app"** (Android/Chrome) ou a dica **"Adiciona
 
 ```
 sipah/
-├── server.js              Servidor: Express + Socket.io, valida pontuação, salva o ranking
+├── server.js              Servidor LOCAL do estande: Express + Socket.io (plano B sem internet)
+├── vercel.json            Publica a pasta public/ na Vercel
 ├── package.json
 ├── data/sipah.json        Jogadores e corridas (criado automaticamente)
 └── public/
@@ -75,11 +78,14 @@ sipah/
     ├── manifest.webmanifest   Configuração do PWA (nome, ícones, cores)
     ├── sw.js              Service worker (cache offline)
     ├── icons/             Ícones do app
+    ├── fonts/             Fontes (Rubik, Lilita One, Permanent Marker)
+    ├── vendor/            Three.js (3D) e gerador de QR code
     ├── css/style.css      Visual e layout responsivo
     └── js/
+        ├── config.js      Endereço do banco (Supabase) e do QR code
         ├── content.js     ← PERGUNTAS, ARQUÉTIPOS, CONQUISTAS E FRASES (edite aqui!)
         ├── game.js        Quiz, avatar 3D, corrida, telas
-        ├── net.js         Conexão com o servidor (e modo offline)
+        ├── net.js         Conexão com o ranking: global, estande ou offline
         ├── pwa.js         Instalação do app
         └── telao.js       Lógica do telão
 ```
@@ -110,12 +116,18 @@ Atributos disponíveis: `caos`, `criatividade`, `estrategia`, `impulsividade`, `
 
 - **Pontos** = metros corridos + 10 × moedas.
 - A velocidade começa em 14 m/s e sobe até 34 m/s.
-- **O servidor mede o tempo da corrida sozinho** e recusa distâncias impossíveis para aquele tempo. Mandar pontuação falsa pelo console não funciona.
+- **O banco (ou o servidor local) mede o tempo da corrida sozinho** e recusa distâncias impossíveis para aquele tempo. Mandar pontuação falsa pelo console não funciona.
 - O ranking do telão mostra a **melhor corrida de cada jogador no dia**.
 
 ## Comandos úteis no dia
 
-**Zerar o ranking de hoje:** inicie com uma senha de administrador:
+**Zerar o ranking global de hoje:** no painel do Supabase, projeto `sipah`, abra o *SQL Editor* e rode:
+
+```sql
+delete from sipah_runs where created_at >= sipah_today_start();
+```
+
+**Zerar o ranking do servidor local:** inicie com uma senha de administrador:
 
 ```bash
 ADMIN_KEY=minhasenha npm start
@@ -142,7 +154,7 @@ No Windows (PowerShell): `$env:ADMIN_KEY="minhasenha"; npm start`
 | Quiz com 8 perguntas e 8 arquétipos | Multiplayer na mesma corrida (cada um corre sozinho e compete no ranking) |
 | Avatar 3D modular gerado pelas respostas | Frase personalizada por IA (as frases são fixas por arquétipo) |
 | Corrida de 3 faixas com 3 tipos de obstáculo | Loja e cosméticos |
-| Ranking ao vivo no telão, validado pelo servidor | Amigos e salas privadas |
+| Ranking global salvo no Supabase, validado pelo banco | Amigos e salas privadas |
 | XP, nível, recorde e conquistas | Sons |
 | Card 9:16 para story | |
 | PWA instalável e offline | |

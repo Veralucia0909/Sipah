@@ -1,8 +1,11 @@
 /*
- * Sipah — servidor do estande
+ * Sipah — servidor LOCAL do estande (modo sem internet)
  * - Entrega o jogo (public/) e o telão (public/telao.html)
  * - Socket.io: recebe jogadores e corridas, valida a pontuação e manda o placar ao vivo
- * - Salva tudo em data/sipah.json (sem banco para instalar)
+ * - Salva tudo em data/sipah.json
+ *
+ * Com internet, o jogo usa o ranking GLOBAL no Supabase (public/js/config.js) e este
+ * servidor serve só como plano B. Na Vercel, a pasta public/ é publicada direto.
  */
 'use strict';
 const express = require('express');
@@ -11,7 +14,6 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { Server } = require('socket.io');
-const QRCode = require('qrcode');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
@@ -109,20 +111,6 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '10kb' }));
 
-// bibliotecas servidas localmente: o estande funciona sem internet
-app.get('/vendor/three.min.js', (req, res) =>
-  res.sendFile(path.join(__dirname, 'node_modules/three/build/three.min.js')));
-app.use('/fonts/rubik', express.static(path.join(__dirname, 'node_modules/@fontsource/rubik')));
-app.use('/fonts/lilita-one', express.static(path.join(__dirname, 'node_modules/@fontsource/lilita-one')));
-app.use('/fonts/permanent-marker', express.static(path.join(__dirname, 'node_modules/@fontsource/permanent-marker')));
-
-app.get('/api/state', (req, res) => res.json(buildState()));
-app.get('/api/qr.svg', async (req, res) => {
-  try {
-    const svg = await QRCode.toString(GAME_URL, { type: 'svg', margin: 1, color: { dark: '#0d0a1aff', light: '#ffffffff' } });
-    res.type('image/svg+xml').send(svg);
-  } catch (e) { res.status(500).end(); }
-});
 // Zerar o placar de hoje: POST /api/reset com {"key":"..."} (só se ADMIN_KEY estiver definida)
 app.post('/api/reset', (req, res) => {
   if (!ADMIN_KEY || (req.body && req.body.key) !== ADMIN_KEY) return res.status(403).json({ ok: false });

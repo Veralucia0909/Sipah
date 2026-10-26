@@ -19,10 +19,26 @@
     toastTimer = setTimeout(() => { t.hidden = true; }, 4500);
   }
 
+  // QR code com o endereço do jogo: o configurado, o do servidor local ou o deste site
+  let qrUrl = null;
+  function gameUrl(s) {
+    const CFG = window.SIPAH_CONFIG || {};
+    if (CFG.publicUrl) return CFG.publicUrl;
+    if (Net.mode() === 'local' && s && s.gameUrl) return s.gameUrl;
+    return location.origin + '/';
+  }
+  function drawQr(url) {
+    if (url === qrUrl || typeof qrcode !== 'function') return;
+    qrUrl = url;
+    const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
+    $('#qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 1, scalable: true });
+    $('#url').textContent = url;
+  }
+
   function render(s) {
     $('#st-players').textContent = s.totalPlayers;
     $('#st-runs').textContent = s.totalRuns;
-    $('#url').textContent = s.gameUrl;
+    drawQr(gameUrl(s));
 
     const rk = $('#rank'); rk.innerHTML = '';
     if (!s.top.length) rk.appendChild(el('li', 'empty', 'Ninguém correu ainda. O primeiro lugar está de graça.'));
@@ -66,19 +82,13 @@
     first = false;
   }
 
-  function setLive(on) {
+  function setLive(on, m) {
     $('#live').classList.toggle('off', !on);
-    $('#live-t').textContent = on ? 'Ao vivo' : 'Sem conexão';
+    $('#live-t').textContent = !on ? 'Sem conexão' : m === 'local' ? 'Ao vivo · estande' : 'Ao vivo';
   }
 
-  if (typeof io === 'function') {
-    const socket = io({ reconnection: true });
-    socket.on('connect', () => setLive(true));
-    socket.on('disconnect', () => setLive(false));
-    socket.on('state', render);
-  } else {
-    setLive(false);
-  }
-  // reabre o QR de vez em quando (se o endereço do servidor mudar)
-  setInterval(() => { $('#qr').src = 'api/qr.svg?t=' + Date.now(); }, 5 * 60 * 1000);
+  drawQr(gameUrl(null));
+  Net.onState(render);
+  Net.onStatus(setLive);
+  Net.init({ watch: 2000 }).then(m => setLive(m !== 'offline', m));
 })();

@@ -1,25 +1,28 @@
 /* Service worker do Sipah: guarda o jogo no aparelho para abrir rápido e funcionar sem internet.
    Ao mudar qualquer arquivo do jogo, aumente VERSION para os celulares baixarem a versão nova. */
-const VERSION = 'sipah-v2';
+const VERSION = 'sipah-v4';
 const SHELL = [
   './',
   'index.html',
   'manifest.webmanifest',
   'css/style.css',
+  'css/fonts.css',
+  'js/config.js',
   'js/content.js',
   'js/net.js',
   'js/pwa.js',
+  'js/avatar.js',
   'js/game.js',
   'vendor/three.min.js',
   'icons/icon.svg',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  'fonts/rubik/400.css',
-  'fonts/rubik/600.css',
-  'fonts/rubik/800.css',
-  'fonts/rubik/900.css',
-  'fonts/permanent-marker/400.css',
-  'fonts/lilita-one/400.css'
+  'fonts/rubik-latin-400-normal.woff2',
+  'fonts/rubik-latin-600-normal.woff2',
+  'fonts/rubik-latin-800-normal.woff2',
+  'fonts/rubik-latin-900-normal.woff2',
+  'fonts/lilita-one-latin-400-normal.woff2',
+  'fonts/permanent-marker-latin-400-normal.woff2'
 ];
 
 self.addEventListener('install', e => {

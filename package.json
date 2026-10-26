@@ -1,21 +1,17 @@
 {
   "name": "sipah",
   "version": "1.0.0",
-  "description": "Sipah: quiz sarcástico + avatar 3D + corrida, com ranking ao vivo no telão (Mundo SENAI)",
+  "description": "Sipah: quiz sarcástico + avatar 3D + corrida, com ranking global (Supabase) e telão ao vivo (Mundo SENAI)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "@fontsource/lilita-one": "5.0.12",
-    "@fontsource/permanent-marker": "5.0.13",
-    "@fontsource/rubik": "5.0.20",
-    "express": "4.21.1",
-    "qrcode": "1.5.4",
-    "socket.io": "4.8.1",
-    "three": "0.128.0"
+    "express": "4.22.3",
+    "socket.io": "4.8.1"
   }
 }
