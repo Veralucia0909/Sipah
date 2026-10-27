@@ -1,6 +1,6 @@
 /* Service worker do Sipah: guarda o jogo no aparelho para abrir rápido e funcionar sem internet.
    Ao mudar qualquer arquivo do jogo, aumente VERSION para os celulares baixarem a versão nova. */
-const VERSION = 'sipah-v4';
+const VERSION = 'sipah-v5';
 const SHELL = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const SHELL = [
   'js/net.js',
   'js/pwa.js',
   'js/avatar.js',
+  'js/avatar-thumb.js',
   'js/game.js',
   'vendor/three.min.js',
   'icons/icon.svg',

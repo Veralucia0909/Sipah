@@ -39,7 +39,7 @@ function compute(answers){
 const topAttrs = a => AK.slice().sort((x,y) => (a[y]||0) - (a[x]||0));
 function decisive(answers, arch){
   return answers.map((oi, qi) => {
-    if(oi == null) return null;
+    if(oi == null || !QUESTIONS[qi]) return null;   // perfis antigos tinham 8 respostas
     const p = QUESTIONS[qi].opts[oi].p; let s = 0;
     for(const k in p) s += (arch.w[k]||0) * p[k];
     return {qi, oi, s};
@@ -71,9 +71,9 @@ const GRAD = (() => {
 const mat = (c, extra) => new THREE.MeshToonMaterial(Object.assign({color:c, gradientMap:GRAD}, extra||{}));
 
 /* ===================== AVATAR ===================== */
-// O visual vem de js/avatar.js. A semente usa o id do jogador e as respostas,
-// então a mesma pessoa sempre recebe o mesmo personagem.
-const avatarSeed = p => p ? (p.id || p.nick || 'x') + ':' + (p.answers || []).join('') : 'visitante';
+// O visual vem de js/avatar.js. A mesma pessoa sempre recebe o mesmo personagem.
+// A semente é o id do jogador: assim o ranking e o telão desenham o mesmo personagem que ele vê no celular.
+const avatarSeed = p => p ? (p.id || p.nick || 'visitante') : 'visitante';
 function buildAvatar(arch, seed){
   const inner = buildAvatar2(arch.id, seed);
   const wrap = new THREE.Group(); wrap.add(inner);   // a corrida mexe na escala do wrap, não na do personagem
@@ -656,15 +656,18 @@ function rankRows(){
   const st = Net.state();
   if(Net.online() && st){
     $('#rk-sub').textContent = `${Net.mode() === 'global' ? 'Ranking global de hoje' : 'Hoje no estande'} · ${st.totalPlayers} jogadores · ${st.totalRuns} corridas`;
-    return st.top.map(r => ({nick:r.nick, arch:r.archId, score:r.score, me:profile && r.id === profile.id}));
+    return st.top.map(r => ({nick:r.nick, arch:r.archId, score:r.score, seed:r.id, me:profile && r.id === profile.id}));
   }
   $('#rk-sub').textContent = 'Sem conexão: melhores corridas deste aparelho';
-  return store.get('sipah.rank', []).slice(0, 10).map(r => ({nick:r.nick, arch:r.arch, score:r.score, me:profile && r.nick === profile.nick}));
+  return store.get('sipah.rank', []).slice(0, 10).map(r => {
+    const me = profile && r.nick === profile.nick;
+    return {nick:r.nick, arch:r.arch, score:r.score, seed: me ? avatarSeed(profile) : r.nick, me};
+  });
 }
 function renderRank(){
   const list = $('#rk-list'); list.innerHTML = '';
   const rk = rankRows();
-  if(!rk.length){ const li = document.createElement('li'); li.innerHTML = '<span></span><span class="n"><b>Ninguém correu ainda.</b><span>Seja o primeiro a passar vergonha.</span></span><span></span>'; list.appendChild(li); }
+  if(!rk.length){ const li = document.createElement('li'); li.className = 'empty'; li.innerHTML = '<span class="n"><b>Ninguém correu ainda.</b><span>Seja o primeiro a passar vergonha.</span></span>'; list.appendChild(li); }
   rk.forEach((r, i) => {
     const li = document.createElement('li'); if(r.me) li.className = 'me';
     const p = document.createElement('span'); p.className = 'pos'; p.textContent = i + 1;
@@ -673,7 +676,8 @@ function renderRank(){
     const s2 = document.createElement('span'); s2.textContent = archById(r.arch).name;
     n.append(b, s2);
     const s = document.createElement('span'); s.className = 's'; s.textContent = r.score;
-    li.append(p, n, s); list.appendChild(li);
+    const arch = archById(r.arch);
+    li.append(p, AvatarThumb.img(arch.id, r.seed, arch.color), n, s); list.appendChild(li);
   });
 }
 function showRank(){

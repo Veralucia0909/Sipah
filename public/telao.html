@@ -42,9 +42,11 @@ section{background:var(--panel);border:2px solid var(--line);border-radius:max(1
 h2{margin:0;font-family:var(--display);font-size:1.7em;line-height:1.1;text-wrap:balance}
 .eyebrow{font-weight:800;font-size:.72em;letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}
 ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:max(6px,calc(var(--u)*.7))}
-.rk li{display:grid;grid-template-columns:2.4em 1fr auto;align-items:center;gap:.8em;background:var(--panel2);border-radius:.7em;padding:.55em .8em;border-left:.35em solid var(--c,var(--line))}
-.rk li:first-child{background:var(--glow);font-size:1.18em}
+.rk li{display:grid;grid-template-columns:1.8em 2.3em 1fr auto;align-items:center;gap:.6em;background:var(--panel2);border-radius:.7em;padding:.28em .75em;line-height:1.12;border-left:.35em solid var(--c,var(--line))}
+.rk li:first-child{background:var(--glow);font-size:1.1em}
 .rk .pos{font-family:var(--display);font-size:1.4em;color:var(--lime);text-align:center}
+.rk .av{width:2.3em;height:2.3em;border-radius:.6em;display:block;object-fit:cover;background:var(--ink)}
+.rk li.empty{grid-template-columns:1fr;border-left:0}
 .rk .n{min-width:0}
 .rk .n b{display:block;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rk .n span{font-size:.75em;color:var(--muted)}
@@ -59,7 +61,7 @@ ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:max
 .leader{margin-top:auto;border:2px dashed var(--lime);border-radius:.9em;padding:.8em 1em;display:flex;flex-direction:column;gap:.15em}
 .leader strong{font-size:1.35em;font-weight:900}
 .qr{display:flex;flex-direction:column;align-items:center;gap:.6em;text-align:center}
-.qrbox{width:min(100%,calc(var(--u)*22));min-width:150px;aspect-ratio:1;background:#fff;border-radius:.6em;padding:.4em;max-width:100%}
+.qrbox{width:min(100%,calc(var(--u)*16));min-width:150px;aspect-ratio:1;background:#fff;border-radius:.6em;padding:.4em;max-width:100%}
 .qrbox svg{display:block;width:100%;height:100%}
 .qr p{margin:0;font-family:var(--display);font-size:1.25em;text-wrap:balance}
 .url{font-size:.8em;color:var(--muted);word-break:break-all;user-select:all}
@@ -118,6 +120,9 @@ ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:max
 </div>
 <div class="toast" id="toast" hidden></div>
 <script src="vendor/qrcode.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="js/avatar.js"></script>
+<script src="js/avatar-thumb.js"></script>
 <script src="js/config.js"></script>
 <script src="js/content.js"></script>
 <script src="js/net.js"></script>

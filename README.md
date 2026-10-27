@@ -2,7 +2,7 @@
 
 Corre que o algoritmo tá te julgando.
 
-O visitante lê o QR code, responde um quiz sarcástico de 8 perguntas, descobre que tipo de problema ele é (e qual área do SENAI combina com ele), ganha um avatar 3D e corre contra o estande inteiro. O telão mostra o ranking ao vivo.
+O visitante lê o QR code, responde um quiz sarcástico de 5 perguntas, descobre que tipo de problema ele é (e qual área do SENAI combina com ele), ganha um avatar 3D e corre contra o estande inteiro. O telão mostra o ranking ao vivo.
 
 - **PWA:** dá para instalar no celular como app e funciona offline.
 - **Responsivo:** celular em pé e deitado, tablet, notebook e TV.
@@ -84,7 +84,9 @@ sipah/
     └── js/
         ├── config.js      Endereço do banco (Supabase) e do QR code
         ├── content.js     ← PERGUNTAS, ARQUÉTIPOS, CONQUISTAS E FRASES (edite aqui!)
-        ├── game.js        Quiz, avatar 3D, corrida, telas
+        ├── game.js        Quiz, corrida, telas
+        ├── avatar.js      Monta o personagem 3D (cada jogador tem um visual único)
+        ├── avatar-thumb.js  Foto do personagem para o ranking (celular e telão)
         ├── net.js         Conexão com o ranking: global, estande ou offline
         ├── pwa.js         Instalação do app
         └── telao.js       Lógica do telão
@@ -106,7 +108,9 @@ Atributos disponíveis: `caos`, `criatividade`, `estrategia`, `impulsividade`, `
 
 **Mudar a área do SENAI de um arquétipo:** altere `area` e `areaWhy` no arquétipo, dentro de `ARCH`.
 
-**Como o arquétipo é escolhido:** cada arquétipo tem pesos (`w`) por atributo e um ajuste (`b`). O jogo soma os pontos das respostas, calcula a nota de cada arquétipo e escolhe a maior. Os ajustes `b` foram calibrados testando todas as 65.536 combinações possíveis de respostas, para que cada um dos 8 arquétipos saia em ~12,5% dos casos. **Se mudar perguntas ou pesos, a distribuição muda.** Vale testar com a turma para ver se algum perfil está saindo demais.
+**Como o arquétipo é escolhido:** cada arquétipo tem pesos (`w`) por atributo e um ajuste (`b`). O jogo soma os pontos das respostas, calcula a nota de cada arquétipo e escolhe a maior. Os ajustes `b` foram calibrados testando todas as 1.024 combinações possíveis de respostas das 5 perguntas, para que cada um dos 8 arquétipos saia em ~12,5% dos casos. **Se mudar perguntas ou pesos, a distribuição muda.** Vale testar com a turma para ver se algum perfil está saindo demais.
+
+**Perguntas reserva:** em `EXTRA_QUESTIONS` ficam 3 perguntas que saíram do quiz. Dá para trocar uma por outra, mas aí vale recalibrar os ajustes `b`.
 
 > **Depois de editar qualquer arquivo de `public/`,** abra `public/sw.js` e aumente a versão (`sipah-v1` → `sipah-v2`). Senão os celulares que já abriram o jogo continuam com a versão antiga guardada.
 
@@ -151,10 +155,10 @@ No Windows (PowerShell): `$env:ADMIN_KEY="minhasenha"; npm start`
 
 | Pronto | Ainda não |
 |---|---|
-| Quiz com 8 perguntas e 8 arquétipos | Multiplayer na mesma corrida (cada um corre sozinho e compete no ranking) |
+| Quiz com 5 perguntas e 8 arquétipos | Multiplayer na mesma corrida (cada um corre sozinho e compete no ranking) |
 | Avatar 3D modular gerado pelas respostas | Frase personalizada por IA (as frases são fixas por arquétipo) |
 | Corrida de 3 faixas com 3 tipos de obstáculo | Loja e cosméticos |
-| Ranking global salvo no Supabase, validado pelo banco | Amigos e salas privadas |
+| Ranking global salvo no Supabase, validado pelo banco, com o avatar de cada jogador | Amigos e salas privadas |
 | XP, nível, recorde e conquistas | Sons |
 | Card 9:16 para story | |
 | PWA instalável e offline | |

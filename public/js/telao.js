@@ -42,11 +42,12 @@
 
     const rk = $('#rank'); rk.innerHTML = '';
     if (!s.top.length) rk.appendChild(el('li', 'empty', 'Ninguém correu ainda. O primeiro lugar está de graça.'));
-    s.top.forEach((r, i) => {
+    // no telão cabem 8 com avatar; o 1º lugar fica maior
+    s.top.slice(0, 8).forEach((r, i) => {
       const a = archById(r.archId);
       const li = el('li'); li.style.setProperty('--c', a.color);
       const n = el('span', 'n'); n.append(el('b', '', '@' + r.nick), el('span', '', a.name));
-      li.append(el('span', 'pos', i + 1), n, el('span', 's', r.score));
+      li.append(el('span', 'pos', i + 1), AvatarThumb.img(a.id, r.id, a.color), n, el('span', 's', r.score));
       rk.appendChild(li);
     });
 
@@ -67,7 +68,7 @@
     $('#leader-a').textContent = top.area;
 
     const feed = $('#feed'); feed.innerHTML = '';
-    s.feed.forEach(r => {
+    s.feed.slice(0, 4).forEach(r => {
       const key = r.id + ':' + r.ts;
       const li = el('li', !first && !seenFeed.has(key) ? 'new' : '');
       li.append(el('span', '', `@${r.nick} · ${archById(r.archId).name}`), el('b', '', r.score));

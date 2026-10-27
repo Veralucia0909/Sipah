@@ -14,6 +14,7 @@ const ATTR = {
 };
 const AK = Object.keys(ATTR);
 
+// O quiz usa estas 5 perguntas. Mudou a lista? Rode a calibração (veja o README) para equilibrar os perfis.
 const QUESTIONS = [
   {t:'Seu celular quebrou. O que você faz?', opts:[
     {t:'Abre o aparelho pra ver o que tem dentro.', p:{criatividade:1,improviso:1,caos:1}, r:'Sobrou um parafuso. Sempre sobra.'},
@@ -35,6 +36,15 @@ const QUESTIONS = [
     {t:'Começa a contemplar a existência.', p:{criatividade:2}, r:'Filósofo por necessidade.'},
     {t:'Descobre que tem família.', p:{social:2}, r:'Eles parecem legais, até.'},
     {t:'Considera seriamente morar na floresta.', p:{caos:1,impulsividade:1,improviso:1}, r:'Lá também não tem sinal, só avisando.'}]},
+  {t:'Prova amanhã. São 23h. Você:', opts:[
+    {t:'Faz resumo com marca-texto de quatro cores.', p:{estrategia:1,teimosia:2}, r:'O resumo ficou maior que o livro.'},
+    {t:'Assiste uma videoaula em 2x e confia.', p:{improviso:2,impulsividade:1}, r:'A fé move montanhas. E notas.'},
+    {t:'Cria um app pra estudar e não estuda.', p:{criatividade:2,caos:1}, r:'Pelo menos o app ficou bom.'},
+    {t:'Monta grupo de estudo que vira grupo de meme.', p:{social:2,caos:1}, r:'400 figurinhas, zero matéria.'}]},
+];
+
+// Banco de perguntas reservas (fora do quiz por enquanto). Para usar, mova para QUESTIONS e recalibre.
+const EXTRA_QUESTIONS = [
   {t:'Sobrou R$ 50.', opts:[
     {t:'Guarda pro futuro.', p:{estrategia:2}, r:'Daqui a 10 anos vale R$ 51.'},
     {t:'Compra algo que não precisava.', p:{impulsividade:2}, r:'Chega amanhã. Você nem vai lembrar o que é.'},
@@ -45,11 +55,6 @@ const QUESTIONS = [
     {t:'Manda um “fonte: vozes da sua cabeça”.', p:{caos:1,competitividade:1,impulsividade:1}, r:'Golpe crítico. 300 curtidas.'},
     {t:'Escreve um textão e apaga.', p:{criatividade:1,teimosia:1}, r:'O melhor texto que ninguém vai ler.'},
     {t:'Silencia a pessoa e segue vivendo.', p:{estrategia:1,improviso:1}, r:'Paz interior desbloqueada.'}]},
-  {t:'Prova amanhã. São 23h. Você:', opts:[
-    {t:'Faz resumo com marca-texto de quatro cores.', p:{estrategia:1,teimosia:2}, r:'O resumo ficou maior que o livro.'},
-    {t:'Assiste uma videoaula em 2x e confia.', p:{improviso:2,impulsividade:1}, r:'A fé move montanhas. E notas.'},
-    {t:'Cria um app pra estudar e não estuda.', p:{criatividade:2,caos:1}, r:'Pelo menos o app ficou bom.'},
-    {t:'Monta grupo de estudo que vira grupo de meme.', p:{social:2,caos:1}, r:'400 figurinhas, zero matéria.'}]},
   {t:'Seu plano para o futuro é:', opts:[
     {t:'Tenho cinco planos e nenhum funcionando.', p:{estrategia:1,caos:2}, r:'Diversificação de fracassos.'},
     {t:'Vou descobrir no caminho.', p:{improviso:2}, r:'GPS da vida: recalculando.'},
@@ -58,27 +63,27 @@ const QUESTIONS = [
 ];
 
 const ARCH = [
-  {id:'caos', name:'O Caos Ambulante', w:{caos:1.6,impulsividade:1.4}, b:.47, color:'#ff3ea5', acc:'spikes',
+  {id:'caos', name:'O Caos Ambulante', w:{caos:1.6,impulsividade:1.4}, b:.85, color:'#ff3ea5', acc:'spikes',
    desc:'Você não resolve problemas. Você cria situações que depois chama de aprendizado.',
    quote:'Se deu errado, pelo menos foi rápido.',
    area:'Eletromecânica', areaWhy:'Quem vive no meio do caos acha o defeito que ninguém mais viu.'},
-  {id:'ceo', name:'O CEO do Nada', w:{estrategia:1.6,social:1.4,competitividade:.4}, b:-.06, color:'#2f6bff', acc:'tie',
+  {id:'ceo', name:'O CEO do Nada', w:{estrategia:1.6,social:1.4,competitividade:.4}, b:.03, color:'#2f6bff', acc:'tie',
    desc:'Tem planilha pra tudo, reunião pra tudo e resultado pra quase nada. Mas a apresentação ficou linda.',
    quote:'Vamos alinhar isso numa call.',
    area:'Logística', areaWhy:'Organizar gente, prazo e caminhão já é o seu dom não remunerado.'},
-  {id:'genio', name:'O Gênio Questionável', w:{criatividade:2,improviso:.8,caos:.4}, b:-.16, color:'#8b3dff', acc:'goggles',
+  {id:'genio', name:'O Gênio Questionável', w:{criatividade:2,improviso:.8,caos:.4}, b:-.84, color:'#8b3dff', acc:'goggles',
    desc:'Dez ideias por minuto. Uma é genial. As outras nove explodem.',
    quote:'Confia, eu vi num vídeo.',
    area:'Automação Industrial', areaWhy:'Inventar a máquina que faz o trabalho por você é o sonho de todo gênio.'},
-  {id:'prota', name:'O Protagonista', w:{competitividade:2,social:1.2,impulsividade:.6}, b:.28, color:'#ffb800', acc:'crown',
+  {id:'prota', name:'O Protagonista', w:{competitividade:2,social:1.2,impulsividade:.6}, b:.83, color:'#ffb800', acc:'crown',
    desc:'Você não entra num lugar. Você faz uma entrada. A trilha sonora toca só na sua cabeça, mas toca alto.',
    quote:'Isso vai pro meu story.',
    area:'Design e Multimídia', areaWhy:'Se todo mundo vai olhar pra você, que olhe pra algo bem feito.'},
-  {id:'clt', name:'O Sobrevivente do CLT', w:{teimosia:2,estrategia:.8}, b:-.97, color:'#5b7fe0', acc:'mug',
+  {id:'clt', name:'O Sobrevivente do CLT', w:{teimosia:2,estrategia:.8}, b:-1.04, color:'#5b7fe0', acc:'mug',
    desc:'Atrasado pra tudo, cansado de tudo, mas entrega. Sempre entrega. Às 23h59.',
    quote:'Só mais cinco minutinhos.',
    area:'Segurança do Trabalho', areaWhy:'Ninguém sabe melhor tudo o que pode dar errado num dia de trabalho.'},
-  {id:'npc', name:'O NPC Premium', w:{improviso:2.2,teimosia:.6,social:-.4}, b:.45, color:'#21d4a8', acc:'npc',
+  {id:'npc', name:'O NPC Premium', w:{improviso:2.2,teimosia:.6,social:-.4}, b:.27, color:'#21d4a8', acc:'npc',
    desc:'Parece uma pessoa comum. Repete as mesmas falas. Mas às vezes faz algo tão absurdo que vira lenda.',
    quote:'Bom dia. Bom dia. Bom dia.',
    area:'Eletricidade', areaWhy:'Calmo por fora, 220 volts por dentro.'},
@@ -86,7 +91,7 @@ const ARCH = [
    desc:'Fala pouco, resolve muito, dorme às 4h. A luz da tela é o seu único bronzeado.',
    quote:'Na minha máquina funciona.',
    area:'Desenvolvimento de Sistemas', areaWhy:'Teimosia mais estratégia: a pessoa que caça um bug até as 3h e gosta.'},
-  {id:'maker', name:'O Mestre da Gambiarra', w:{improviso:1.6,criatividade:1.1,impulsividade:1.1}, b:.18, color:'#ff7a1a', acc:'hardhat',
+  {id:'maker', name:'O Mestre da Gambiarra', w:{improviso:1.6,criatividade:1.1,impulsividade:1.1}, b:.09, color:'#ff7a1a', acc:'hardhat',
    desc:'Fita isolante, um clipe e muita fé. Se não tem a peça, você inventa a peça.',
    quote:'Não é gambiarra, é engenharia alternativa.',
    area:'Mecânica e Fabricação', areaWhy:'Transformar gambiarra em projeto de verdade é exatamente o que se aprende lá.'}
