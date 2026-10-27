@@ -280,7 +280,7 @@ function makeObsKit(){
   OBS = {
     boleto:{geo:new THREE.BoxGeometry(1.9, 0.8, 0.5), mats:[yel,yel,yel,yel,lab('BOLETO','#ffd21a','#0d0a1a'),yel], d:0.25},
     grupo:{geo:new THREE.BoxGeometry(1.95, 0.6, 0.14), mats:[pink,pink,pink,pink,lab('GRUPO DA\nFAMÍLIA','#ff3ea5','#ffffff'),pink], post, d:0.07},
-    segunda:{geo:new THREE.BoxGeometry(1.9, 2.7, 1.4), mats:[purp,purp,purp,purp,lab('SEGUNDA\nFEIRA','#8b3dff','#ffffff'),purp], d:0.7},
+    segunda:{geo:new THREE.BoxGeometry(1.9, 2.7, 6), mats:[purp,purp,purp,purp,lab('SEGUNDA\nFEIRA','#8b3dff','#ffffff'),purp], d:0.7},
     postGeo:new THREE.CylinderGeometry(0.06, 0.06, 1.75, 8),
     coinGeo:new THREE.CylinderGeometry(0.32, 0.32, 0.09, 22),
     coinMat:mat('#c8f31d', {emissive:'#4a5e00'})
