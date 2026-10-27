@@ -75,7 +75,7 @@ input[type=text]:focus{border-color:var(--lime)}
 .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .link{background:none;border:0;color:var(--muted);font:600 13px var(--body);text-decoration:underline;cursor:pointer;padding:8px;align-self:center}
-button:focus-visible,input:focus-visible{outline:3px solid var(--rosa);outline-offset:3px}
+button:focus-visible,input:focus-visible{outline-offset:3px}
 
 /* Quiz */
 .qtop{display:flex;align-items:center;gap:12px}
