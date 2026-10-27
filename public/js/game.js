@@ -331,6 +331,8 @@ function spawnRow(z){
     }
   }
 }
+/* Tamanho do personagem na corrida: menor que no lobby para dar para ver os obstáculos */
+const RUN_SCALE = 0.72;
 function fitRun(){
   const W = window.innerWidth, H = window.innerHeight;
   rcam.aspect = W / H;
@@ -338,9 +340,9 @@ function fitRun(){
   if(rcam.aspect < 1){
     rcam.fov = 66;
     const z = 7.5 / Math.max(0.55, Math.min(1, rcam.aspect*1.3));
-    rcam.userData = {z, y:3.3 + (z - 7.5)*0.32};
+    rcam.userData = {z: z + 0.8, y:4.2 + (z - 7.5)*0.32};
   } else {
-    rcam.fov = 58; rcam.userData = {z:7.4, y:3.5};
+    rcam.fov = 58; rcam.userData = {z:8.2, y:4.4};
   }
   rcam.updateProjectionMatrix();
 }
@@ -352,7 +354,7 @@ async function startRun(){
   clearRun();
   const arch = archById(profile.archId);
   player = buildAvatar(arch, avatarSeed(profile));
-  player.rotation.y = Math.PI; run.add(player);
+  player.rotation.y = Math.PI; player.scale.setScalar(RUN_SCALE); run.add(player);
   lane = 0; px = 0; py = 0; vy = 0; slideT = 0;
   speed = 14; dist = 0; runT = 0; coins = 0; score = 0; spawnAcc = 30;
   countT = 3; goFlash = 0; deathT = 0; overShown = false; camX = 0;
@@ -427,8 +429,8 @@ function updateRun(dt, t){
     if(slideT > 0) slideT -= dt;
     const sliding = slideT > 0 && py <= 0.01;
     player.position.set(px, py, 0);
-    const sy = sliding ? 0.5 : 1;
-    player.scale.y += (sy - player.scale.y) * Math.min(1, dt*20);
+    const sy = sliding ? 0.55 : 1;
+    player.scale.y += (sy*RUN_SCALE - player.scale.y) * Math.min(1, dt*20);
     player.rotation.z = (lane*LANE - px) * 0.12;
     animateAvatar(player, t, sliding ? 'slide' : (py > 0.05 ? 'air' : 'run'));
 
@@ -460,7 +462,7 @@ function updateRun(dt, t){
   }
   camX += (px*0.55 - camX) * Math.min(1, dt*5);
   rcam.position.set(camX, cd.y, cd.z);
-  rcam.lookAt(camX*0.6, 1.1, -9);
+  rcam.lookAt(camX*0.6, 0.6, -14);
 }
 function die(type){
   rs = 'dead'; deathType = type; deathT = 0;
