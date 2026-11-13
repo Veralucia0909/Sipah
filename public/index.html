@@ -140,10 +140,16 @@
 <section class="screen" id="s-run" hidden>
   <div class="hud">
     <div><div class="small">Pontos</div><div class="score" id="h-score">0</div></div>
+    <button class="pause-btn" id="btn-pause" type="button" aria-label="Pausar"><span></span><span></span></button>
     <div><div class="small" style="text-align:right">Moedas</div><div class="coins" id="h-coins">0</div></div>
   </div>
   <div class="hint" id="h-hint">Deslize ← → para trocar de faixa, ↑ para pular, ↓ para deslizar. No teclado: setas ou WASD.</div>
   <div class="count" id="h-count"></div>
+  <div class="pause-panel" id="pause" hidden>
+    <h2>Pausado</h2>
+    <p>O algoritmo também tá esperando.</p>
+    <button class="btn big" id="btn-resume" type="button"><span>Continuar</span></button>
+  </div>
 </section>
 
 <!-- FIM DE CORRIDA -->

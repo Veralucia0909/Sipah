@@ -45,11 +45,24 @@ language sql stable set search_path = public, pg_temp as $$
   select (date_trunc('day', now() at time zone 'America/Sao_Paulo')) at time zone 'America/Sao_Paulo';
 $$;
 
--- Mesma física do jogo: velocidade = min(34, 14 + 0,35·t) m/s
+-- Mesma física do jogo: velocidade sobe por nível (a cada 1000 pontos) em curva
+-- logarítmica, acelerando no máximo 2,5 m/s². Simula o pior caso (todas as moedas).
 create or replace function public.sipah_max_dist(t double precision) returns double precision
-language sql immutable set search_path = public, pg_temp as $$
-  select case when t <= 20/0.35 then 14*t + 0.175*t*t
-              else 14*(20/0.35) + 0.175*(20/0.35)^2 + 34*(t - 20/0.35) end;
+language plpgsql immutable set search_path = public, pg_temp as $$
+declare
+  step constant double precision := 0.05;
+  v double precision := 14; d double precision := 0; s double precision := 0;
+  score_max double precision; target double precision;
+begin
+  while s < least(t, 7200) loop
+    score_max := d + 10 * (d / 1.4 + 5);
+    target := 18 + 8.6 * ln(1 + floor(score_max / 1000));
+    v := least(target, v + 2.5 * step);
+    d := d + v * step;
+    s := s + step;
+  end loop;
+  return d;
+end;
 $$;
 
 create or replace function public.sipah_join(p_id text, p_nick text, p_arch text) returns json

@@ -93,13 +93,21 @@ function broadcast() {
 }
 
 /* ---------- validação da corrida ----------
- * Mesma física do jogo: velocidade = min(34, 14 + 0,35·t) m/s.
- * O servidor mede o tempo da corrida sozinho, então o celular não consegue
- * mandar uma distância maior do que seria possível naquele tempo. */
+ * Mesma física do jogo: a velocidade sobe por nível (a cada 1000 pontos) em curva
+ * logarítmica, acelerando no máximo 2,5 m/s². Aqui simulamos o pior caso possível
+ * (todas as moedas pegas, o que faz os níveis subirem mais cedo). O servidor mede o
+ * tempo da corrida sozinho, então o celular não consegue mandar uma distância maior
+ * do que seria possível naquele tempo. */
 function maxDistance(t) {
-  const tCap = (34 - 14) / 0.35;
-  if (t <= tCap) return 14 * t + 0.175 * t * t;
-  return 14 * tCap + 0.175 * tCap * tCap + 34 * (t - tCap);
+  const step = 0.05;
+  let v = 14, d = 0;
+  for (let s = 0; s < Math.min(t, 7200); s += step) {
+    const scoreMax = d + 10 * (d / 1.4 + 5);
+    const target = 18 + 8.6 * Math.log(1 + Math.floor(scoreMax / 1000));
+    v = Math.min(target, v + 2.5 * step);
+    d += v * step;
+  }
+  return d;
 }
 
 function cleanNick(n) {

@@ -304,6 +304,14 @@ let player = null, rs = 'idle';
 let lane = 0, px = 0, py = 0, vy = 0, slideT = 0;
 let speed = 14, dist = 0, runT = 0, coins = 0, score = 0, spawnAcc = 0;
 let countT = 0, goFlash = 0, deathT = 0, deathType = 'boleto', overShown = false;
+let speedLevel = 0;
+let paused = false, resumeT = 0;
+
+/* Velocidade por nível: sobe a cada 1000 pontos, para sempre, mas cada nível
+ * acelera menos que o anterior (curva logarítmica), então nunca fica impossível.
+ * Nível 0: 18 · 1: 24 · 2: 27,4 · 3: 29,9 · 5: 33,4 · 10: 38,6 · 20: 44,2 · 50: 51,8 m/s */
+const SPEED_BASE = 18, SPEED_GAIN = 8.6, SPEED_STEP = 1000, SPEED_ACCEL = 2.5;
+function targetSpeed(level){ return SPEED_BASE + SPEED_GAIN * Math.log(1 + level); }
 let obstacles = [], coinList = [];
 let camX = 0;
 
@@ -356,7 +364,8 @@ async function startRun(){
   player = buildAvatar(arch, avatarSeed(profile));
   player.rotation.y = Math.PI; player.scale.setScalar(RUN_SCALE); run.add(player);
   lane = 0; px = 0; py = 0; vy = 0; slideT = 0;
-  speed = 14; dist = 0; runT = 0; coins = 0; score = 0; spawnAcc = 30;
+  speed = 14; dist = 0; runT = 0; coins = 0; score = 0; spawnAcc = 30; speedLevel = 0;
+  resetPause();
   countT = 3; goFlash = 0; deathT = 0; overShown = false; camX = 0;
   for(let z = -40; z > -100; z -= 20) spawnRow(z);
   rs = 'count'; mode = 'run';
@@ -369,7 +378,7 @@ async function startRun(){
 }
 
 function input(action){
-  if(mode !== 'run' || rs !== 'go') return;
+  if(mode !== 'run' || rs !== 'go' || paused || resumeT > 0) return;
   if(action === 'left') lane = Math.max(-1, lane - 1);
   if(action === 'right') lane = Math.min(1, lane + 1);
   if(action === 'jump' && py <= 0.001 && slideT <= 0){ vy = 9.2; }
@@ -377,9 +386,39 @@ function input(action){
   if(action === 'slide'){ slideT = 0.75; if(py > 0.01) vy = -16; }
   $('#h-hint').hidden = true;
 }
+/* ---------- PAUSE ----------
+ * Pausa só durante a corrida. Ao continuar, conta 3, 2, 1 antes de voltar a correr.
+ * Também pausa sozinho quando o celular troca de app ou a aba fica escondida. */
+function canPause(){ return mode === 'run' && (rs === 'go' || rs === 'count'); }
+function pauseRun(){
+  if(!canPause() || paused) return;
+  paused = true; resumeT = 0;
+  $('#pause').hidden = false; $('#btn-pause').hidden = true; $('#h-count').textContent = '';
+}
+function resumeRun(){
+  if(!paused) return;
+  paused = false; $('#pause').hidden = true; $('#btn-pause').hidden = false;
+  if(rs === 'go'){ resumeT = 3; goFlash = 0; $('#h-count').textContent = '3'; }
+  last = performance.now();
+}
+function resetPause(){
+  paused = false; resumeT = 0;
+  $('#pause').hidden = true; $('#btn-pause').hidden = false;
+}
+['pointerdown', 'pointerup'].forEach(ev => {
+  $('#btn-pause').addEventListener(ev, e => { e.stopPropagation(); sw = null; });
+  $('#pause').addEventListener(ev, e => { e.stopPropagation(); sw = null; });
+});
+$('#btn-pause').addEventListener('click', pauseRun);
+$('#btn-resume').addEventListener('click', resumeRun);
+document.addEventListener('visibilitychange', () => { if(document.hidden) pauseRun(); });
+window.addEventListener('blur', pauseRun);
+
 window.addEventListener('keydown', e => {
   if(mode !== 'run') return;
   const k = e.key.toLowerCase();
+  if(k === 'p' || k === 'escape'){ e.preventDefault(); paused ? resumeRun() : pauseRun(); return; }
+  if(paused){ if(k === 'enter' || k === ' '){ e.preventDefault(); resumeRun(); } return; }
   const map = {arrowleft:'left', a:'left', arrowright:'right', d:'right', arrowup:'jump', w:'jump', ' ':'jump', arrowdown:'slide', s:'slide'};
   if(map[k]){ e.preventDefault(); input(map[k]); }
 });
@@ -402,6 +441,14 @@ window.addEventListener('pointerup', e => {
 function updateRun(dt, t){
   if(!player) return;
   const cd = rcam.userData || {z:7.4, y:3.5};
+  if(paused) return;
+  if(resumeT > 0){
+    resumeT -= dt;
+    $('#h-count').textContent = resumeT > 0 ? String(Math.ceil(resumeT)) : 'CORRE!';
+    if(resumeT <= 0) goFlash = 0.5;
+    animateAvatar(player, t, 'idle');
+    return;
+  }
   if(rs === 'count'){
     countT -= dt;
     $('#h-count').textContent = countT > 0 ? String(Math.ceil(countT)) : '';
@@ -410,7 +457,9 @@ function updateRun(dt, t){
   } else if(rs === 'go'){
     if(goFlash > 0){ goFlash -= dt; if(goFlash <= 0) $('#h-count').textContent = ''; }
     runT += dt;
-    speed = Math.min(34, 14 + runT*0.35);
+    const lvl = Math.floor(score / SPEED_STEP);
+    if(lvl > speedLevel){ speedLevel = lvl; goFlash = 1.1; $('#h-count').textContent = 'NÍVEL ' + (lvl + 1); }
+    speed = Math.min(targetSpeed(speedLevel), speed + SPEED_ACCEL*dt);
     const dz = speed * dt; dist += dz;
     trackTex.offset.y += dz / TILE;
     buildings.forEach(b => { b.position.z += dz; if(b.position.z > 16) b.position.z -= 15*8; });
@@ -437,7 +486,8 @@ function updateRun(dt, t){
     const top = py + (sliding ? 0.95 : 2.1);
     for(const o of obstacles){
       const z = o.g.position.z;
-      if(Math.abs(z) > o.d + 0.35) continue;
+      const w = o.d + 0.35;
+      if(z < -w || z - dz > w) continue;
       if(Math.abs(o.x - px) > 1.15) continue;
       let hit = false;
       if(o.type === 'boleto') hit = py < 0.78;
@@ -447,7 +497,8 @@ function updateRun(dt, t){
     }
     for(let i = coinList.length - 1; i >= 0; i--){
       const c = coinList[i];
-      if(Math.abs(c.m.position.z) < 0.7 && Math.abs(c.x - px) < 0.9 && py < 1.6){
+      const cz = c.m.position.z;
+      if(cz > -0.7 && cz - dz < 0.7 && Math.abs(c.x - px) < 0.9 && py < 1.6){
         coins++; run.remove(c.m); coinList.splice(i, 1);
       }
     }
@@ -466,6 +517,7 @@ function updateRun(dt, t){
 }
 function die(type){
   rs = 'dead'; deathType = type; deathT = 0;
+  $('#btn-pause').hidden = true;
   if(navigator.vibrate){ try{ navigator.vibrate(120); }catch(e){} }
 }
 
